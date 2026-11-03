@@ -291,7 +291,16 @@ const THEMES=[
   ["Sieste de chat","Hibernation d'ours"],["Déguisement de fantôme","Déguisement de licorne"],
   ["Réunion qui aurait pu être un mail","Réunion avec des pirates"],["Ami imaginaire","Ennemi imaginaire"],
   ["Discret","Se remarque depuis la Lune"],["Se perdre au supermarché","Se perdre dans la jungle"],
-  ["Pet discret","Pet qui fait trembler les murs"]]}
+  ["Pet discret","Pet qui fait trembler les murs"]]},
+ {id:"notes",name:"Les 10 mais…",blurb:"C'est un 10, mais il pue des pieds",color:"#16A394",angle:60,scale:true,pairs:[
+  ["1/10","10/10","Quelqu'un croisé en soirée"],["1/10","10/10","Ton prochain voisin"],
+  ["1/10","10/10","Un nouveau collègue"],["1/10","10/10","Un ex de ton meilleur ami"],
+  ["1/10","10/10","Le futur beau-père ou la future belle-mère"],["1/10","10/10","Un candidat de télé-réalité"],
+  ["1/10","10/10","Le serveur ou la serveuse du resto"],["1/10","10/10","Quelqu'un rencontré en vacances"],
+  ["1/10","10/10","Un influenceur très suivi"],["1/10","10/10","Ton crush de lycée retrouvé 15 ans après"],
+  ["1/10","10/10","Le prof de sport"],["1/10","10/10","Un inconnu croisé dans le train"],
+  ["1/10","10/10","Un livreur très sympa"],["1/10","10/10","Un acteur de série à la mode"],
+  ["1/10","10/10","Un ami d'ami rencontré à un barbecue"],["1/10","10/10","Un voisin de camping"]]}
 ];
 
 /* ---------- Réglages du cadran ---------- */
@@ -329,6 +338,9 @@ const state={
 };
 const theme=()=>THEMES.find(t=>t.id===state.themeId)||null;
 const nm=i=>(state.names[i]||"").trim()||("Joueur "+(i+1));
+const isScale=()=>{const t=theme();return !!(t&&t.scale);};
+const noteOf=a=>(1+a*9/180).toLocaleString("fr-FR",{minimumFractionDigits:1,maximumFractionDigits:1});
+const showVal=a=>isScale()?noteOf(a)+" / 10":Math.round(a)+"°";
 
 /* ---------- Cadran (SVG) ---------- */
 const dial=$("dial");
@@ -372,7 +384,7 @@ function setNeedle(){needleEl.setAttribute("transform","rotate("+state.guess+" "
 function setGuess(a){
   state.guess=clamp(Math.round(a),0,180);
   setNeedle();
-  const o=$("readout"); if(o) o.textContent=state.guess+"°";
+  const o=$("readout"); if(o) o.textContent=showVal(state.guess);
 }
 function applyDial(){
   const open=state.phase==="peek"||state.phase==="reveal";
@@ -417,7 +429,7 @@ function buildThemes(){
     cards+='<button class="card" type="button" data-act="pick" data-id="'+t.id+'" style="--c:'+t.color+'">'+
       '<span class="cardtop">'+miniDial(t.angle)+'<span class="cname">'+esc(t.name)+'</span></span>'+
       '<span class="cblurb">'+esc(t.blurb)+'</span>'+
-      '<span class="csample">'+esc(s[0])+' ↔ '+esc(s[1])+'</span></button>';
+      '<span class="csample">'+(t.scale?esc(s[2]):esc(s[0])+' ↔ '+esc(s[1]))+'</span></button>';
   });
   $("screenThemes").innerHTML=
     '<div class="themes-head"><div><h1>Choisissez un thème</h1>'+
@@ -436,7 +448,7 @@ function draw(){
   if(!d||!d.length) d=shuffle(t.pairs.map((_,i)=>i));
   const i=d.pop(); state.deck[t.id]=d;
   let p=t.pairs[i].slice();
-  if(Math.random()<0.5) p=[p[1],p[0]];
+  if(!t.scale&&Math.random()<0.5) p=[p[1],p[0]];
   state.card=p;
 }
 function newRound(){
@@ -466,7 +478,7 @@ function launch(){
 function validate(){
   const th=theme();
   const d=Math.abs(state.guess-state.target), pts=points(d);
-  state.log.push({themeName:th.name,left:state.card[0],right:state.card[1],target:state.target,guess:state.guess,pts:pts,clue:state.clue.trim(),by:nm(state.giver)});
+  state.log.push({themeName:th.name,left:state.card[0],right:state.card[1],target:state.target,guess:state.guess,pts:pts,clue:state.clue.trim(),by:nm(state.giver),scale:isScale(),subject:state.card[2]||""});
   state.giver=1-state.giver;
   state.phase="reveal"; render();
 }
@@ -486,6 +498,7 @@ function panelHTML(){
   if(state.phase==="ready"){
     return '<p class="kicker">Manche '+n+' · '+esc(th.name)+'</p>'+
       '<h2>'+g+' donne l\'indice</h2>'+
+      (state.card[2]?'<p class="subject">Sujet : <b>'+esc(state.card[2])+'</b>. Exemple : « C\'est un 10, mais il pue des pieds ».</p>':'')+
       '<p>'+p+', tourne-toi ou ferme les yeux. '+g+', lance la roue quand tu es seul·e à voir l\'écran.</p>'+
       '<div class="actions"><button class="btn primary" type="button" data-act="launch">Lancer la roue</button>'+
       '<div class="row"><button class="btn ghost" type="button" data-act="skip">Autre carte</button>'+
@@ -497,9 +510,10 @@ function panelHTML(){
         '<p>Regarde où elle s\'arrête. '+p+' ne regarde pas.</p>'+
         '<div class="actions"><button class="btn primary" type="button" disabled>Cacher la cible</button></div>';
     }
+    const scale=isScale();
     return '<p class="kicker">Cible secrète</p>'+
-      '<h2>'+state.target+'°<small>'+esc(whereWord(state.target,L,Rr))+'</small></h2>'+
-      '<p>Trouve un mot ou une expression qui tombe à cet endroit entre « '+esc(L)+' » et « '+esc(Rr)+' ». Dis-le à voix haute, sans chiffres ni « gauche » ou « droite ».</p>'+
+      (scale?'<h2>'+noteOf(state.target)+' / 10<small>'+esc(state.card[2]||"")+'</small></h2>':'<h2>'+state.target+'°<small>'+esc(whereWord(state.target,L,Rr))+'</small></h2>')+
+      (scale?'<p>Décris cette personne avec un « c\'est un 10, mais… » dont le défaut fait tomber la note jusqu\'ici. Dis-le à voix haute.</p>':'<p>Trouve un mot ou une expression qui tombe à cet endroit entre « '+esc(L)+' » et « '+esc(Rr)+' ». Dis-le à voix haute, sans chiffres ni « gauche » ou « droite ».</p>')+
       '<label class="field" for="clue"><span>Indice (facultatif, affiché à la fin)</span><input type="text" id="clue" maxlength="60" autocomplete="off" value="'+esc(state.clue)+'"></label>'+
       '<div class="actions"><button class="btn primary" type="button" data-act="hide">Cacher la cible</button></div>';
   }
@@ -507,9 +521,10 @@ function panelHTML(){
     const c=state.clue.trim();
     return '<p class="kicker">Manche '+n+' · '+esc(th.name)+'</p>'+
       '<h2>'+p+', place l\'aiguille</h2>'+
+      (state.card[2]?'<p class="subject">Sujet : <b>'+esc(state.card[2])+'</b></p>':'')+
       '<p>'+(c?'Indice de '+g+' : « '+esc(c)+' »':g+' vient de donner l\'indice à voix haute.')+'</p>'+
       '<div class="nudge"><button class="icon" type="button" data-act="nudgeL" aria-label="Aiguille d\'un degré vers la gauche">'+chev(-1)+'</button>'+
-      '<output id="readout">'+state.guess+'°</output>'+
+      '<output id="readout">'+showVal(state.guess)+'</output>'+
       '<button class="icon" type="button" data-act="nudgeR" aria-label="Aiguille d\'un degré vers la droite">'+chev(1)+'</button></div>'+
       '<p class="hint">Fais glisser ton doigt sur le cadran, puis ajuste avec les flèches.</p>'+
       '<div class="actions"><button class="btn primary" type="button" data-act="validate">Valider</button></div>';
@@ -517,7 +532,7 @@ function panelHTML(){
   const e=state.log[state.log.length-1], diff=Math.abs(e.guess-e.target);
   return '<p class="kicker">Résultat · manche '+state.log.length+'</p>'+
     '<div class="pts"><b>+'+e.pts+'</b><span>'+esc(MSG[e.pts])+'</span></div>'+
-    '<p class="detail">Cible '+e.target+'° · aiguille '+e.guess+'° · écart '+diff+'°</p>'+
+    (e.scale?'<p class="detail">Cible '+noteOf(e.target)+' / 10 · aiguille '+noteOf(e.guess)+' / 10</p>':'<p class="detail">Cible '+e.target+'° · aiguille '+e.guess+'° · écart '+diff+'°</p>')+
     (e.clue?'<p class="quote">« '+esc(e.clue)+' », '+esc(e.by)+'</p>':'')+
     '<div class="actions"><button class="btn primary" type="button" data-act="next">Manche suivante</button>'+
     '<div class="row"><button class="btn ghost" type="button" data-act="themes">Changer de thème</button>'+
@@ -548,7 +563,7 @@ function openSummary(){
   const n=state.log.length, total=state.log.reduce((s,e)=>s+e.pts,0);
   const avg=n?(total/n).toLocaleString("fr-FR",{maximumFractionDigits:1}):"0";
   let rows="";
-  state.log.forEach(e=>{rows+='<li><span class="lt">'+esc(e.themeName)+'</span><span class="lp">'+esc(e.left)+' ↔ '+esc(e.right)+'</span><b>+'+e.pts+'</b></li>';});
+  state.log.forEach(e=>{rows+='<li><span class="lt">'+esc(e.themeName)+'</span><span class="lp">'+(e.subject?esc(e.subject):esc(e.left)+' ↔ '+esc(e.right))+'</span><b>+'+e.pts+'</b></li>';});
   $("sheet").innerHTML='<h2>Bilan de la partie</h2>'+
     '<div class="stats"><div><b>'+total+'</b><span>points</span></div><div><b>'+n+'</b><span>manches</span></div><div><b>'+avg+'</b><span>par manche</span></div></div>'+
     (n?'<ol class="rounds">'+rows+'</ol>':'<p>Aucune manche jouée pour l\'instant.</p>')+
