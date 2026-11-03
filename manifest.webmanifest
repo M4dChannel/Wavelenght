@@ -1,0 +1,17 @@
+{
+  "name": "Wavelength",
+  "short_name": "Wavelength",
+  "description": "Jeu de devinettes à deux : un cadran, un indice, une aiguille à placer.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#101330",
+  "theme_color": "#101330",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#EDF0F8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101330" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Wavelength">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Wavelength</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Figtree:wght@400;600;700&display=swap">
+<style>
+/* Layout: paysage. Cadran à gauche (s'adapte à la hauteur), panneau d'actions à droite.
+   Empilé si on force le mode portrait. Un seul accent, celui du thème choisi. */
+:root{
+  --bg:#EDF0F8; --surface:#FFFFFF; --fg:#171C42; --muted:#5A6088; --line:#CDD3E8;
+  --face:#F6F7FD; --cover:#2B3170; --cover-ink:#FFFFFF;
+  --btn-bg:#232A5C; --btn-fg:#FFFFFF; --needle:#141836; --halo:#FFFFFF;
+  --acc:#4F6BED;
+  --z2:color-mix(in srgb,var(--acc) 34%,var(--face));
+  --z3:color-mix(in srgb,var(--acc) 66%,var(--face));
+  --z4:var(--acc);
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101330; --surface:#191D42; --fg:#E9ECFF; --muted:#A0A7D2; --line:#2D3367;
+    --face:#20265A; --cover:#3B4496; --cover-ink:#FFFFFF;
+    --btn-bg:#EEF0FF; --btn-fg:#141836;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101330; --surface:#191D42; --fg:#E9ECFF; --muted:#A0A7D2; --line:#2D3367;
+  --face:#20265A; --cover:#3B4496; --cover-ink:#FFFFFF;
+  --btn-bg:#EEF0FF; --btn-fg:#141836;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font:15px/1.4 var(--body);
+  padding-block:8px;
+  padding-left:max(16px, env(safe-area-inset-left,0px));
+  padding-right:max(16px, env(safe-area-inset-right,0px));
+  -webkit-tap-highlight-color:transparent;
+}
+button,input{font-family:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+
+.app{height:100%;max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:10px;min-height:0}
+
+/* En-tête */
+.top{display:flex;align-items:center;gap:10px;min-height:38px}
+.brand{--c:var(--acc);display:flex;align-items:center;gap:8px;font:800 20px/1 var(--display);letter-spacing:-.01em}
+.brand .mini{width:38px;height:22px}
+.chip{display:flex;align-items:center;gap:8px;min-height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 14px var(--body);cursor:pointer}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--acc)}
+.score{margin-left:auto;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.score b{color:var(--fg);font:800 20px var(--display)}
+.top .btn{margin-left:0}
+.score[hidden]+.btn{margin-left:auto}
+
+/* Boutons */
+.btn{min-height:46px;padding:0 16px;border-radius:14px;border:1px solid transparent;font:700 15px var(--body);cursor:pointer;background:transparent;color:var(--fg)}
+.btn.primary{background:var(--btn-bg);color:var(--btn-fg)}
+.btn.ghost{border-color:var(--line);background:transparent}
+.btn.small{min-height:34px;padding:0 12px;font-size:14px}
+.btn:disabled{opacity:.45;cursor:default}
+.icon{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--fg);display:grid;place-items:center;cursor:pointer}
+
+/* Écran des thèmes */
+.stage{flex:1;min-height:0}
+.themes{height:100%;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-bottom:4px}
+.themes-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px 20px;flex-wrap:wrap}
+.themes h1{margin:0;font:800 clamp(22px,3.4vw,30px)/1.05 var(--display);text-wrap:balance}
+.themes-head p{margin:4px 0 0;color:var(--muted);max-width:48ch}
+.names{display:flex;gap:10px}
+.names label,.field{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.field{font-size:13px}
+input[type="text"]{height:42px;width:100%;min-width:0;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:0 12px;font-size:16px}
+.names input{width:136px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.card{--c:var(--acc);display:flex;flex-direction:column;gap:5px;text-align:left;padding:12px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;min-width:0}
+.card:hover{border-color:var(--c)}
+.card.on{border-color:var(--c);box-shadow:0 0 0 2px var(--c)}
+.cardtop{display:flex;align-items:center;gap:10px}
+.cname{font:800 17px/1.1 var(--display)}
+.cblurb{font-size:13px;color:var(--muted)}
+.csample{margin-top:auto;padding-top:4px;font-size:12px;font-weight:700}
+.mini{width:52px;height:30px;flex:none;display:block}
+.mini .mf{fill:var(--face);stroke:var(--line);stroke-width:1}
+.mini .m2{fill:color-mix(in srgb,var(--c) 34%,var(--face))}
+.mini .m3{fill:color-mix(in srgb,var(--c) 66%,var(--face))}
+.mini .m4{fill:var(--c)}
+
+/* Écran de jeu */
+.game{height:100%;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(250px,1fr);gap:16px;min-height:0}
+.dialcol{display:flex;flex-direction:column;justify-content:center;gap:8px;min-height:0}
+.dialbox{flex:1;min-height:0}
+#dial{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none}
+#dial.live{cursor:grab}
+.ends{display:flex;justify-content:space-between;gap:12px;font:800 clamp(15px,2.6vw,22px)/1.15 var(--display)}
+.ends span{min-width:0;max-width:48%;overflow-wrap:anywhere}
+.ends span:last-child{text-align:right}
+
+#dial .face{fill:var(--face);stroke:var(--line);stroke-width:2}
+#dial .arc{fill:none;stroke:var(--line);stroke-width:1}
+#dial .base{stroke:var(--line);stroke-width:2}
+#dial .ticks{fill:none;stroke:var(--muted);stroke-width:1.4;stroke-linecap:round}
+#dial .z2{fill:var(--z2)} #dial .z3{fill:var(--z3)} #dial .z4{fill:var(--z4)}
+#dial .pl{paint-order:stroke;stroke:var(--face);stroke-width:3px;stroke-linejoin:round;fill:var(--fg);font:800 11px var(--display);text-anchor:middle;dominant-baseline:central}
+#dial .marker line{stroke:var(--acc);stroke-width:4;stroke-linecap:round}
+.marker{transition:opacity .25s}
+#dial.closed .marker{opacity:0}
+#dial .cv{fill:var(--cover)}
+#dial .cva{fill:none;stroke:var(--cover-ink);stroke-opacity:.16;stroke-width:2}
+#dial .cq{fill:var(--cover-ink);fill-opacity:.9;font:800 72px var(--display);text-anchor:middle}
+.cover{transform-origin:200px 206px;transform-box:view-box;transition:transform .7s cubic-bezier(.6,.05,.2,1)}
+.cover.open{transform:rotate(180deg)}
+#dial .nh{stroke:var(--halo);stroke-width:8;stroke-linecap:round}
+#dial .nc{stroke:var(--needle);stroke-width:4;stroke-linecap:round}
+#dial .nt{fill:var(--needle);stroke:var(--halo);stroke-width:3}
+#dial .hub{fill:var(--needle);stroke:var(--halo);stroke-width:3}
+#dial .deg{fill:var(--muted);font:600 10px var(--body);text-anchor:middle}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:0}
+.panel p{margin:0}
+.kicker{font:700 11px/1.2 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.panel h2{margin:0;font:800 clamp(20px,3vw,26px)/1.1 var(--display);text-wrap:balance}
+.panel h2 small{display:block;margin-top:4px;font:600 14px/1.3 var(--body);color:var(--muted)}
+.actions{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:6px}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+.hint{font-size:13px;color:var(--muted)}
+.nudge{display:flex;align-items:center;justify-content:center;gap:14px}
+.nudge output{min-width:4ch;text-align:center;font:800 32px/1 var(--display);font-variant-numeric:tabular-nums}
+.pts{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.pts b{font:800 54px/1 var(--display);text-decoration:underline;text-decoration-color:var(--acc);text-decoration-thickness:6px;text-underline-offset:5px;font-variant-numeric:tabular-nums}
+.pts span{font:700 16px/1.25 var(--body);flex:1;min-width:10ch}
+.detail{color:var(--muted);font-variant-numeric:tabular-nums}
+.quote{font-style:italic}
+
+/* Bilan */
+.overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(4px);
+  padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet{width:100%;max-width:560px;max-height:100%;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.sheet h2{margin:0;font:800 24px/1.1 var(--display)}
+.stats{display:flex;gap:10px}
+.stats div{flex:1;display:flex;flex-direction:column;padding:10px 12px;border-radius:14px;background:var(--bg)}
+.stats b{font:800 30px/1 var(--display);font-variant-numeric:tabular-nums}
+.stats span{font-size:12px;color:var(--muted)}
+.rounds{list-style:none;margin:0;padding:0;max-height:28vh;overflow-y:auto;display:flex;flex-direction:column}
+.rounds li{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
+.rounds .lt{color:var(--muted);width:7.5em;flex:none}
+.rounds .lp{flex:1;min-width:0;overflow-wrap:anywhere}
+.rounds b{font-variant-numeric:tabular-nums}
+
+/* Invite à tourner le téléphone */
+.rotate-note{display:none;position:fixed;inset:0;z-index:30;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;background:var(--bg);color:var(--fg);
+  padding:calc(16px + env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px))}
+.rotate-note h2{margin:0;font:800 26px/1.1 var(--display)}
+.rotate-note p{margin:0;max-width:32ch;color:var(--muted)}
+.phone{transform-origin:40px 40px;transform-box:view-box;animation:tilt 2.6s ease-in-out infinite}
+@keyframes tilt{0%,25%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+@media (orientation:portrait){
+  body:not(.allow-portrait) .rotate-note{display:flex}
+  body:not(.allow-portrait) .app{visibility:hidden}
+}
+@media (max-aspect-ratio:1/1){
+  .app{overflow-y:auto}
+  .stage{flex:none}
+  .game{height:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto}
+  .dialbox{flex:none;aspect-ratio:400/224;max-width:100%}
+  .themes{height:auto;overflow:visible}
+}
+@media (prefers-reduced-motion:reduce){
+  .cover{transition:none}
+  .phone{animation:none}
+  .marker{transition:none}
+}
+</style>
+</head>
+<body>
+
+
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand"><span id="logoSlot"></span><span>Wavelength</span></div>
+    <button class="chip" id="themeChip" type="button" data-act="themes" hidden><i class="dot"></i><span id="themeChipName"></span></button>
+    <div class="score" id="score" hidden><b id="scoreTotal">0</b> pts · <span id="scoreRounds"></span></div>
+    <button class="btn ghost small" id="btnSummary" type="button" data-act="summary" hidden>Bilan</button>
+  </header>
+
+  <main class="stage">
+    <section class="themes" id="screenThemes"></section>
+
+    <section class="game" id="screenGame" hidden>
+      <div class="dialcol">
+        <div class="dialbox">
+          <svg id="dial" viewBox="0 0 400 224" preserveAspectRatio="xMidYMax meet" role="img" aria-label="Cadran de 0 à 180 degrés" tabindex="0"></svg>
+        </div>
+        <div class="ends"><span id="endL"></span><span id="endR"></span></div>
+      </div>
+      <aside class="panel" id="panel"></aside>
+    </section>
+  </main>
+</div>
+
+<div class="overlay" id="summary" hidden>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Bilan de la partie"></div>
+</div>
+
+<div class="rotate-note" id="rotateNote">
+  <svg viewBox="0 0 80 80" width="88" height="88" aria-hidden="true"><g class="phone"><rect x="26" y="12" width="28" height="56" rx="6" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="40" cy="60" r="2.5" fill="currentColor"/></g></svg>
+  <h2>Tourne ton téléphone</h2>
+  <p>Le cadran se joue en mode paysage. Vérifie que le verrouillage de la rotation est désactivé.</p>
+  <button class="btn ghost" type="button" data-act="portrait">Jouer en portrait quand même</button>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Thèmes et cartes ---------- */
+const THEMES=[
+ {id:"classiques",name:"Les classiques",blurb:"Pour se chauffer",color:"#4F6BED",angle:55,pairs:[
+  ["Froid","Chaud"],["Petit","Énorme"],["Lent","Rapide"],["Facile","Impossible"],["Silencieux","Assourdissant"],
+  ["Vieux","Tout neuf"],["Triste","Joyeux"],["Léger","Lourd"],["Moche","Magnifique"],["Rare","Banal"],
+  ["Inoffensif","Dangereux"],["Inutile","Indispensable"],["Pas cher","Hors de prix"],["Sage","Complètement fou"]]},
+ {id:"gourmandise",name:"Gourmandise",blurb:"Du dégoûtant au délicieux",color:"#E8742A",angle:120,pairs:[
+  ["Dégoûtant","Délicieux"],["Salé","Sucré"],["Repas de semaine","Repas de fête"],["Recette express","Recette interminable"],
+  ["Trop cuit","Pas assez cuit"],["Léger","Ça cale"],["Raisonnable","Péché mignon"],["Boisson du matin","Boisson du soir"],
+  ["Pas épicé","Brûle la bouche"],["Cantine","Grand restaurant"],["Entrée","Dessert"],
+  ["Se mange avec les mains","Se mange avec des couverts"],["Goût d'enfance","Goût d'adulte"],["Facile à rater","Impossible à rater"]]},
+ {id:"couple",name:"À deux",blurb:"Complicité et petites manies",color:"#D63384",angle:80,pairs:[
+  ["Pas romantique","Très romantique"],["Cadeau raté","Cadeau parfait"],["Sortie à éviter","Sortie idéale"],
+  ["Manie agaçante","Manie adorable"],["Soirée tranquille","Soirée folle"],["À faire seul","À faire à deux"],
+  ["Gênant en public","Mignon en public"],["Sujet qui fâche","Sujet qui fait rire"],["Mauvaise excuse","Excuse crédible"],
+  ["Petit geste","Grande déclaration"],["Dimanche flemme","Dimanche aventure"],["Corvée détestée","Corvée acceptable"],
+  ["Rendez-vous raté","Rendez-vous parfait"],["Surprise ratée","Surprise réussie"]]},
+ {id:"jeuxvideo",name:"Jeux vidéo",blurb:"Boss, lag et manettes",color:"#8B5CF6",angle:140,pairs:[
+  ["Jeu nul","Chef-d'œuvre"],["Boss facile","Boss impossible"],["Jeu solo","Jeu coop"],["Arme inutile","Arme cassée"],
+  ["Pouvoir inutile","Pouvoir surpuissant"],["Jeu relaxant","Jeu qui fait hurler"],["Pixel art","Graphismes ultra réalistes"],
+  ["Bug drôle","Bug fatal"],["Débutant","Pro"],["Personnage mignon","Personnage terrifiant"],["Quête annexe","Quête principale"],
+  ["Jeu de 1 h","Jeu de 100 h"],["Dépend de la chance","Dépend du talent"],["Mauvais perdant","Bon perdant"]]},
+ {id:"animaux",name:"Animaux",blurb:"Du pas mignon au trop mignon",color:"#34A06A",angle:100,pairs:[
+  ["Pas mignon","Trop mignon"],["Dangereux","Câlin"],["Bruyant","Discret"],["Lent","Rapide"],["Mange peu","Mange tout"],
+  ["Sent bon","Sent fort"],["Paresseux","Hyperactif"],["Pas très malin","Génie"],["Animal de ferme","Animal sauvage"],
+  ["Poilu","Sans poils"],["Fait peur","Rassure"],["Minuscule","Gigantesque"],["On le voit partout","On ne le voit jamais"],
+  ["Indépendant","Collant"]]},
+ {id:"cinema",name:"Cinéma et séries",blurb:"Du navet au film culte",color:"#D9A100",angle:65,pairs:[
+  ["Navet","Film culte"],["Série en solo","Série à deux"],["Fait pleurer","Fait rire"],["Méchant ridicule","Méchant terrifiant"],
+  ["Fin décevante","Fin parfaite"],["Vu une fois","Vu dix fois"],["Musique oubliable","Musique inoubliable"],
+  ["Film pour enfants","Film pour adultes"],["On abandonne","On enchaîne"],["Acteur surcoté","Acteur sous-coté"],
+  ["Film qui fait peur","Film qui rassure"],["Réaliste","Totalement improbable"],["Trop court","Trop long"],
+  ["Pour un dimanche pluvieux","Pour un vendredi soir"]]},
+ {id:"vacances",name:"Vacances",blurb:"Plage, montagne et valises",color:"#0E9FBF",angle:130,pairs:[
+  ["Vacances ratées","Vacances de rêve"],["Plage","Montagne"],["Tout organisé","Aventure sans plan"],["Pas cher","Hors de prix"],
+  ["Destination banale","Destination exotique"],["Valise légère","Valise énorme"],["Calme","Animé"],
+  ["Trajet court","Trajet interminable"],["Hôtel bof","Hôtel de luxe"],["Souvenir inutile","Souvenir précieux"],
+  ["Ville","Campagne"],["Trop chaud","Trop froid"],["Touristique","Secret"],["Se reposer","Se dépenser"]]},
+ {id:"nimportequoi",name:"Grand n'importe quoi",blurb:"Le plus drôle, souvent",color:"#E04848",angle:95,pairs:[
+  ["Idée de génie","Idée catastrophique"],["Super-pouvoir utile","Super-pouvoir ridicule"],
+  ["Mou comme une chaussette","Dur comme un rocher"],["Petite gêne","Honte absolue"],["Excuse crédible","Excuse ridicule"],
+  ["Métier ennuyeux","Métier de rêve"],["Cri de joie","Cri de terreur"],["Odeur agréable","Odeur horrible"],
+  ["On garde","On jette"],["Prénom pour un poisson rouge","Prénom pour un roi"],["Cadeau de Noël nul","Cadeau de Noël génial"],
+  ["Possible sans internet","Impossible sans internet"],["Meilleur moment de la journée","Pire moment de la journée"],
+  ["Reste calme","Panique totale"]]},
+ {id:"coquin",name:"Coquin",blurb:"Pour les soirées à deux",color:"#A3238E",angle:110,pairs:[
+  ["Message mignon","Message coquin"],["Tenue sage","Tenue qui fait tourner les têtes"],["Bisou sur la joue","Baiser langoureux"],
+  ["Regard innocent","Regard qui en dit long"],["Pyjama polaire","Tenue de séduction"],["Soirée télé","Soirée aux chandelles"],
+  ["Massage de routine","Massage qui dérape"],["Compliment sage","Compliment qui fait rougir"],["Câlin de réconfort","Câlin qui s'éternise"],
+  ["Danse maladroite","Danse sensuelle"],["Lumière du salon","Lumière tamisée"],["Réveil précipité","Grasse matinée à deux"],
+  ["Chuchoter un secret","Chuchoter un défi"],["Rougit à peine","Rougit jusqu'aux oreilles"],["Cadeau pratique","Cadeau audacieux"],
+  ["Pudique","Sans aucune gêne"]]},
+ {id:"loufoque",name:"Loufoque",blurb:"Dragons, yacks et hamsters",color:"#8DB600",angle:85,pairs:[
+  ["Excuse banale","Excuse : enlevé par des aliens"],["Gentil comme une poule","Féroce comme un T-Rex"],
+  ["Cadeau : des chaussettes","Cadeau : un yack"],["Nom de super-héros nul","Nom de super-héros légendaire"],
+  ["Pizza normale","Pizza aux bonbons"],["Hamster qui court","Hamster qui dirige un pays"],
+  ["Cri de canard en plastique","Cri de dragon"],["Moustache de grand-père","Moustache de pirate"],
+  ["Sieste de chat","Hibernation d'ours"],["Déguisement de fantôme","Déguisement de licorne"],
+  ["Réunion qui aurait pu être un mail","Réunion avec des pirates"],["Ami imaginaire","Ennemi imaginaire"],
+  ["Discret","Se remarque depuis la Lune"],["Se perdre au supermarché","Se perdre dans la jungle"],
+  ["Pet discret","Pet qui fait trembler les murs"]]}
+];
+
+/* ---------- Réglages du cadran ---------- */
+const CX=200, CY=206, R=176;
+const BANDS=[[6,4],[12,3],[18,2]];            // demi-largeur en degrés, points
+const MSG={4:"Pile sur la même longueur d'onde !",3:"Presque pile, bravo.",2:"Dans la zone, pas mal.",0:"Pas du tout sur la même longueur d'onde."};
+const REDUCE=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- Outils ---------- */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const rad=d=>d*Math.PI/180;
+const f=n=>n.toFixed(2);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pt=(a,r)=>[CX-r*Math.cos(rad(a)),CY-r*Math.sin(rad(a))];
+function wedge(a0,a1,r){r=r||R;const p0=pt(a0,r),p1=pt(a1,r);return "M"+CX+" "+CY+"L"+f(p0[0])+" "+f(p0[1])+"A"+r+" "+r+" 0 0 1 "+f(p1[0])+" "+f(p1[1])+"Z";}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function points(d){for(const b of BANDS){if(d<=b[0])return b[1];}return 0;}
+function miniDial(angle){
+  const cx=30,cy=32,r=28;
+  const p=(a,rr)=>[cx-rr*Math.cos(rad(a)),cy-rr*Math.sin(rad(a))];
+  const w=h=>{const a=p(angle-h,r),b=p(angle+h,r);return "M"+cx+" "+cy+"L"+f(a[0])+" "+f(a[1])+"A"+r+" "+r+" 0 0 1 "+f(b[0])+" "+f(b[1])+"Z";};
+  return '<svg class="mini" viewBox="0 0 60 34" aria-hidden="true"><path class="mf" d="M'+(cx-r)+" "+cy+"A"+r+" "+r+" 0 0 1 "+(cx+r)+" "+cy+'Z"/><path class="m2" d="'+w(16)+'"/><path class="m3" d="'+w(10)+'"/><path class="m4" d="'+w(4.5)+'"/></svg>';
+}
+
+/* ---------- État ---------- */
+const state={
+  phase:"themes",           // themes | ready | peek | guess | reveal
+  themeId:null,
+  names:["Joueur 1","Joueur 2"],
+  giver:0,
+  card:null,
+  target:90, guess:90, clue:"", spun:false,
+  deck:{}, log:[]
+};
+const theme=()=>THEMES.find(t=>t.id===state.themeId)||null;
+const nm=i=>(state.names[i]||"").trim()||("Joueur "+(i+1));
+
+/* ---------- Cadran (SVG) ---------- */
+const dial=$("dial");
+(function buildDial(){
+  let ticks="";
+  for(let a=0;a<=180;a+=5){
+    const major=a%90===0, mid=a%10===0;
+    const p0=pt(a,R+5), p1=pt(a,R+5+(major?12:mid?8:4));
+    ticks+="M"+f(p0[0])+" "+f(p0[1])+"L"+f(p1[0])+" "+f(p1[1]);
+  }
+  let arcs="";
+  [44,88,132].forEach(r=>{arcs+='<path class="arc" d="M'+(CX-r)+" "+CY+"A"+r+" "+r+" 0 0 1 "+(CX+r)+" "+CY+'"/>';});
+  let wedges="";
+  BANDS.slice().reverse().forEach(b=>{wedges+='<path class="z'+b[1]+'" d="'+wedge(90-b[0],90+b[0])+'"/>';});
+  const labelAt=(a,t)=>{const p=pt(a,R-22);return '<text class="pl" x="'+f(p[0])+'" y="'+f(p[1])+'">'+t+"</text>";};
+  wedges+=labelAt(90,"4")+labelAt(81,"3")+labelAt(99,"3")+labelAt(75,"2")+labelAt(105,"2");
+  const m0=pt(90,R+1), m1=pt(90,R+16);
+  wedges+='<g class="marker"><line x1="'+f(m0[0])+'" y1="'+f(m0[1])+'" x2="'+f(m1[0])+'" y2="'+f(m1[1])+'"/></g>';
+  const L=R+10;
+  dial.innerHTML=
+    '<defs><clipPath id="upper"><rect x="0" y="0" width="400" height="'+CY+'"/></clipPath></defs>'+
+    '<path class="ticks" d="'+ticks+'"/>'+
+    '<path class="face" d="M'+(CX-R)+" "+CY+"A"+R+" "+R+" 0 0 1 "+(CX+R)+" "+CY+'Z"/>'+
+    arcs+
+    '<g clip-path="url(#upper)"><g id="wedges">'+wedges+"</g></g>"+
+    '<line class="base" x1="'+(CX-R-4)+'" y1="'+CY+'" x2="'+(CX+R+4)+'" y2="'+CY+'"/>'+
+    '<g clip-path="url(#upper)"><g id="cover" class="cover">'+
+      '<path class="cv" d="M'+(CX-R-3)+" "+CY+"A"+(R+3)+" "+(R+3)+" 0 0 1 "+(CX+R+3)+" "+CY+'Z"/>'+
+      '<path class="cva" d="M'+(CX-120)+" "+CY+"A120 120 0 0 1 "+(CX+120)+" "+CY+'"/>'+
+      '<path class="cva" d="M'+(CX-70)+" "+CY+"A70 70 0 0 1 "+(CX+70)+" "+CY+'"/>'+
+      '<text class="cq" x="'+CX+'" y="'+(CY-64)+'">?</text>'+
+    "</g></g>"+
+    '<g id="needle" hidden><line class="nh" x1="'+CX+'" y1="'+CY+'" x2="'+(CX-L)+'" y2="'+CY+'"/><line class="nc" x1="'+CX+'" y1="'+CY+'" x2="'+(CX-L)+'" y2="'+CY+'"/><circle class="nt" cx="'+(CX-L)+'" cy="'+CY+'" r="5"/></g>'+
+    '<circle class="hub" cx="'+CX+'" cy="'+CY+'" r="11"/>'+
+    '<text class="deg" x="'+(CX-R)+'" y="'+(CY+16)+'">0°</text>'+
+    '<text class="deg" x="'+(CX+R)+'" y="'+(CY+16)+'">180°</text>';
+})();
+const wedgesEl=$("wedges"), coverEl=$("cover"), needleEl=$("needle");
+function setWedges(a){wedgesEl.setAttribute("transform","rotate("+f(a-90)+" "+CX+" "+CY+")");}
+function setNeedle(){needleEl.setAttribute("transform","rotate("+state.guess+" "+CX+" "+CY+")");}
+function setGuess(a){
+  state.guess=clamp(Math.round(a),0,180);
+  setNeedle();
+  const o=$("readout"); if(o) o.textContent=state.guess+"°";
+}
+function applyDial(){
+  const open=state.phase==="peek"||state.phase==="reveal";
+  coverEl.classList.toggle("open",open);
+  dial.classList.toggle("closed",!open);
+  dial.classList.toggle("live",state.phase==="guess");
+  needleEl.toggleAttribute("hidden",!(state.phase==="guess"||state.phase==="reveal"));
+  setNeedle();
+  if(state.phase!=="peek"||state.spun) setWedges(state.target);
+}
+
+/* Glisser l'aiguille */
+function angleFromEvent(e){
+  const p=dial.createSVGPoint(); p.x=e.clientX; p.y=e.clientY;
+  const q=p.matrixTransform(dial.getScreenCTM().inverse());
+  const dx=q.x-CX, dy=CY-q.y;
+  if(dy<=0) return dx<0?0:180;
+  return clamp(180-Math.atan2(dy,dx)*180/Math.PI,0,180);
+}
+let dragging=false;
+dial.addEventListener("pointerdown",e=>{
+  if(state.phase!=="guess") return;
+  dragging=true;
+  try{dial.setPointerCapture(e.pointerId);}catch(_){}
+  setGuess(angleFromEvent(e));
+});
+dial.addEventListener("pointermove",e=>{if(dragging) setGuess(angleFromEvent(e));});
+["pointerup","pointercancel"].forEach(t=>dial.addEventListener(t,()=>{dragging=false;}));
+dial.addEventListener("keydown",e=>{
+  if(state.phase!=="guess") return;
+  const s=e.shiftKey?5:1;
+  if(e.key==="ArrowLeft"){setGuess(state.guess-s);e.preventDefault();}
+  if(e.key==="ArrowRight"){setGuess(state.guess+s);e.preventDefault();}
+});
+
+/* ---------- Écran des thèmes ---------- */
+function buildThemes(){
+  $("logoSlot").innerHTML=miniDial(70);
+  let cards="";
+  THEMES.forEach(t=>{
+    const s=t.pairs[0];
+    cards+='<button class="card" type="button" data-act="pick" data-id="'+t.id+'" style="--c:'+t.color+'">'+
+      '<span class="cardtop">'+miniDial(t.angle)+'<span class="cname">'+esc(t.name)+'</span></span>'+
+      '<span class="cblurb">'+esc(t.blurb)+'</span>'+
+      '<span class="csample">'+esc(s[0])+' ↔ '+esc(s[1])+'</span></button>';
+  });
+  $("screenThemes").innerHTML=
+    '<div class="themes-head"><div><h1>Choisissez un thème</h1>'+
+    '<p>Restez sur le même tant que ça vous fait rire, changez quand vous voulez.</p></div>'+
+    '<div class="names"><label for="name0">Joueur 1<input type="text" id="name0" maxlength="16" autocomplete="off"></label>'+
+    '<label for="name1">Joueur 2<input type="text" id="name1" maxlength="16" autocomplete="off"></label></div></div>'+
+    '<div class="grid">'+cards+'</div>';
+  $("name0").value=state.names[0]; $("name1").value=state.names[1];
+}
+function applyAccent(){const t=theme(); if(t) document.documentElement.style.setProperty("--acc",t.color);}
+
+/* ---------- Tour de jeu ---------- */
+function draw(){
+  const t=theme(); if(!t) return;
+  let d=state.deck[t.id];
+  if(!d||!d.length) d=shuffle(t.pairs.map((_,i)=>i));
+  const i=d.pop(); state.deck[t.id]=d;
+  let p=t.pairs[i].slice();
+  if(Math.random()<0.5) p=[p[1],p[0]];
+  state.card=p;
+}
+function newRound(){
+  draw(); state.phase="ready"; state.clue=""; state.guess=90; state.spun=false; render();
+}
+function pickTheme(id){state.themeId=id; applyAccent(); newRound();}
+
+let raf=0;
+function launch(){
+  cancelAnimationFrame(raf);
+  state.phase="peek"; state.spun=false; state.clue="";
+  state.target=Math.round(12+Math.random()*156);
+  const T=state.target, A0=(Math.random()<0.5?-1:1)*(55+Math.random()*25);
+  setWedges(T+A0);
+  render();
+  if(REDUCE){setWedges(T); state.spun=true; render(); return;}
+  const t0=performance.now()+300, DUR=2600;
+  const tick=now=>{
+    if(state.phase!=="peek"||state.spun) return;
+    const t=(now-t0)/DUR;
+    if(t>=1){setWedges(T); state.spun=true; render(); return;}
+    if(t>0) setWedges(T+A0*Math.exp(-5*t)*Math.cos(Math.PI*2*2.25*t));
+    raf=requestAnimationFrame(tick);
+  };
+  raf=requestAnimationFrame(tick);
+}
+function validate(){
+  const th=theme();
+  const d=Math.abs(state.guess-state.target), pts=points(d);
+  state.log.push({themeName:th.name,left:state.card[0],right:state.card[1],target:state.target,guess:state.guess,pts:pts,clue:state.clue.trim(),by:nm(state.giver)});
+  state.giver=1-state.giver;
+  state.phase="reveal"; render();
+}
+
+/* ---------- Panneau ---------- */
+const chev=dir=>'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="'+(dir<0?"M15 5l-7 7 7 7":"M9 5l7 7-7 7")+'" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function whereWord(t,l,r){
+  if(t<30) return "tout près de « "+l+" »";
+  if(t<70) return "plutôt vers « "+l+" »";
+  if(t<=110) return "au milieu";
+  if(t<=150) return "plutôt vers « "+r+" »";
+  return "tout près de « "+r+" »";
+}
+function panelHTML(){
+  const th=theme(), L=state.card[0], Rr=state.card[1];
+  const n=state.log.length+1, g=esc(nm(state.giver)), p=esc(nm(1-state.giver));
+  if(state.phase==="ready"){
+    return '<p class="kicker">Manche '+n+' · '+esc(th.name)+'</p>'+
+      '<h2>'+g+' donne l\'indice</h2>'+
+      '<p>'+p+', tourne-toi ou ferme les yeux. '+g+', lance la roue quand tu es seul·e à voir l\'écran.</p>'+
+      '<div class="actions"><button class="btn primary" type="button" data-act="launch">Lancer la roue</button>'+
+      '<div class="row"><button class="btn ghost" type="button" data-act="skip">Autre carte</button>'+
+      '<button class="btn ghost" type="button" data-act="themes">Thèmes</button></div></div>';
+  }
+  if(state.phase==="peek"){
+    if(!state.spun){
+      return '<p class="kicker">Cible secrète</p><h2>La roue tourne…</h2>'+
+        '<p>Regarde où elle s\'arrête. '+p+' ne regarde pas.</p>'+
+        '<div class="actions"><button class="btn primary" type="button" disabled>Cacher la cible</button></div>';
+    }
+    return '<p class="kicker">Cible secrète</p>'+
+      '<h2>'+state.target+'°<small>'+esc(whereWord(state.target,L,Rr))+'</small></h2>'+
+      '<p>Trouve un mot ou une expression qui tombe à cet endroit entre « '+esc(L)+' » et « '+esc(Rr)+' ». Dis-le à voix haute, sans chiffres ni « gauche » ou « droite ».</p>'+
+      '<label class="field" for="clue"><span>Indice (facultatif, affiché à la fin)</span><input type="text" id="clue" maxlength="60" autocomplete="off" value="'+esc(state.clue)+'"></label>'+
+      '<div class="actions"><button class="btn primary" type="button" data-act="hide">Cacher la cible</button></div>';
+  }
+  if(state.phase==="guess"){
+    const c=state.clue.trim();
+    return '<p class="kicker">Manche '+n+' · '+esc(th.name)+'</p>'+
+      '<h2>'+p+', place l\'aiguille</h2>'+
+      '<p>'+(c?'Indice de '+g+' : « '+esc(c)+' »':g+' vient de donner l\'indice à voix haute.')+'</p>'+
+      '<div class="nudge"><button class="icon" type="button" data-act="nudgeL" aria-label="Aiguille d\'un degré vers la gauche">'+chev(-1)+'</button>'+
+      '<output id="readout">'+state.guess+'°</output>'+
+      '<button class="icon" type="button" data-act="nudgeR" aria-label="Aiguille d\'un degré vers la droite">'+chev(1)+'</button></div>'+
+      '<p class="hint">Fais glisser ton doigt sur le cadran, puis ajuste avec les flèches.</p>'+
+      '<div class="actions"><button class="btn primary" type="button" data-act="validate">Valider</button></div>';
+  }
+  const e=state.log[state.log.length-1], diff=Math.abs(e.guess-e.target);
+  return '<p class="kicker">Résultat · manche '+state.log.length+'</p>'+
+    '<div class="pts"><b>+'+e.pts+'</b><span>'+esc(MSG[e.pts])+'</span></div>'+
+    '<p class="detail">Cible '+e.target+'° · aiguille '+e.guess+'° · écart '+diff+'°</p>'+
+    (e.clue?'<p class="quote">« '+esc(e.clue)+' », '+esc(e.by)+'</p>':'')+
+    '<div class="actions"><button class="btn primary" type="button" data-act="next">Manche suivante</button>'+
+    '<div class="row"><button class="btn ghost" type="button" data-act="themes">Changer de thème</button>'+
+    '<button class="btn ghost" type="button" data-act="summary">Bilan</button></div></div>';
+}
+
+function render(){
+  const th=theme(), onThemes=state.phase==="themes";
+  $("screenThemes").hidden=!onThemes;
+  $("screenGame").hidden=onThemes;
+  $("themeChip").hidden=!th;
+  if(th) $("themeChipName").textContent=th.name;
+  const n=state.log.length, total=state.log.reduce((s,e)=>s+e.pts,0);
+  $("score").hidden=!n;
+  $("scoreTotal").textContent=total;
+  $("scoreRounds").textContent=n+(n>1?" manches":" manche");
+  $("btnSummary").hidden=!n;
+  document.querySelectorAll(".card").forEach(c=>c.classList.toggle("on",c.dataset.id===state.themeId));
+  if(onThemes) return;
+  $("endL").textContent=state.card[0];
+  $("endR").textContent=state.card[1];
+  $("panel").innerHTML=panelHTML();
+  applyDial();
+}
+
+/* ---------- Bilan ---------- */
+function openSummary(){
+  const n=state.log.length, total=state.log.reduce((s,e)=>s+e.pts,0);
+  const avg=n?(total/n).toLocaleString("fr-FR",{maximumFractionDigits:1}):"0";
+  let rows="";
+  state.log.forEach(e=>{rows+='<li><span class="lt">'+esc(e.themeName)+'</span><span class="lp">'+esc(e.left)+' ↔ '+esc(e.right)+'</span><b>+'+e.pts+'</b></li>';});
+  $("sheet").innerHTML='<h2>Bilan de la partie</h2>'+
+    '<div class="stats"><div><b>'+total+'</b><span>points</span></div><div><b>'+n+'</b><span>manches</span></div><div><b>'+avg+'</b><span>par manche</span></div></div>'+
+    (n?'<ol class="rounds">'+rows+'</ol>':'<p>Aucune manche jouée pour l\'instant.</p>')+
+    '<div class="row"><button class="btn ghost" type="button" data-act="closeSummary">Continuer</button>'+
+    '<button class="btn primary" type="button" data-act="newGame">Nouvelle partie</button></div>';
+  $("summary").hidden=false;
+}
+
+/* ---------- Actions ---------- */
+const ACT={
+  pick(el){pickTheme(el.dataset.id);},
+  themes(){state.phase="themes"; render();},
+  launch:launch,
+  skip(){draw(); render();},
+  hide(){state.phase="guess"; state.guess=90; render();},
+  validate:validate,
+  next:newRound,
+  nudgeL(){setGuess(state.guess-1);},
+  nudgeR(){setGuess(state.guess+1);},
+  summary:openSummary,
+  closeSummary(){$("summary").hidden=true;},
+  newGame(){$("summary").hidden=true; state.log=[]; state.giver=0; state.themeId=null; state.phase="themes"; document.documentElement.style.removeProperty("--acc"); render();},
+  portrait(){document.body.classList.add("allow-portrait");}
+};
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-act]"); if(!el) return;
+  const fn=ACT[el.dataset.act]; if(fn) fn(el);
+});
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.id==="clue") state.clue=t.value;
+  if(t.id==="name0"||t.id==="name1"){
+    state.names[t.id==="name0"?0:1]=t.value;
+    try{localStorage.setItem("wavelength-names",JSON.stringify(state.names));}catch(_){}
+  }
+});
+
+/* Écran allumé pendant la partie */
+let lock=null;
+async function keepAwake(){
+  try{
+    if(document.visibilityState==="visible"&&navigator.wakeLock&&!lock){
+      lock=await navigator.wakeLock.request("screen");
+      lock.addEventListener("release",()=>{lock=null;});
+    }
+  }catch(_){}
+}
+document.addEventListener("visibilitychange",keepAwake);
+window.addEventListener("pointerdown",keepAwake,{once:true});
+
+/* ---------- Démarrage ---------- */
+let restored=false;
+function start(data){
+  try{
+    if(data&&data.state){
+      Object.assign(state,data.state);
+      if(state.phase==="peek") state.spun=true;
+      restored=true;
+    }
+  }catch(_){}
+  if(!restored){
+    try{
+      const saved=JSON.parse(localStorage.getItem("wavelength-names")||"null");
+      if(Array.isArray(saved)&&saved.length===2) state.names=[String(saved[0]),String(saved[1])];
+    }catch(_){}
+  }
+  if(state.phase!=="themes"&&(!state.card||!theme())) state.phase="themes";
+  buildThemes();
+  applyAccent();
+  render();
+}
+try{
+  if(window.claude&&window.claude.hot&&window.claude.hot.snapshot){
+    window.claude.hot.snapshot(function(){return {state:JSON.parse(JSON.stringify(state))};});
+  }
+}catch(_){}
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+})();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
